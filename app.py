@@ -26,18 +26,6 @@ HF_TOKEN = os.environ["HF_TOKEN"]
 
 # ---- GLOBAL DECLARATIONS ---- #
 
-
-# Load vectorstore (prepopulated with a notebook, because it takes forever)
-print("loading vectorstore")
-if os.path.exists("./data/vectorstore"):
-    vectorstore = FAISS.load_local(
-        "./data/vectorstore", 
-        hf_embeddings, 
-        allow_dangerous_deserialization=True # this is necessary to load the vectorstore from disk as it's stored as a `.pkl` file.
-    )
-    hf_retriever = vectorstore.as_retriever()
-    print("Loaded Vectorstore")
-
 # -- AUGMENTED -- #
 ### 1. DEFINE STRING TEMPLATE
 RAG_PROMPT_TEMPLATE = """\
@@ -91,6 +79,17 @@ async def start_chat():
         huggingfacehub_api_token=os.environ["HF_TOKEN"],
     )
     print("embeddings initialized")
+
+    # Load vectorstore (prepopulated with a notebook, because it takes forever)
+    print("loading vectorstore")
+    if os.path.exists("./data/vectorstore"):
+        vectorstore = FAISS.load_local(
+            "./data/vectorstore", 
+            hf_embeddings, 
+            allow_dangerous_deserialization=True # this is necessary to load the vectorstore from disk as it's stored as a `.pkl` file.
+        )
+        hf_retriever = vectorstore.as_retriever()
+        print("Loaded Vectorstore")
 
     print("initializing huggingface endpoint")
     hf_llm = HuggingFaceEndpoint(
