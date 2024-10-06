@@ -94,9 +94,7 @@ async def start_chat():
     We will build our LCEL RAG chain here, and store it in the user session. 
     The user session is a dictionary that is unique to each user session, and is stored in the memory of the server.
     """
-    if not hf_retriever:
-        raise ValueError("Retriever not initialized")
-
+    
     ### BUILD LCEL RAG CHAIN THAT ONLY RETURNS TEXT
     lcel_rag_chain = {"context": itemgetter("query") | hf_retriever, "query": itemgetter("query")}| rag_prompt | hf_llm
 
