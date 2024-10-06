@@ -25,14 +25,7 @@ HF_EMBED_ENDPOINT = os.environ["HF_EMBED_ENDPOINT"]
 HF_TOKEN = os.environ["HF_TOKEN"]
 
 # ---- GLOBAL DECLARATIONS ---- #
-# -- RETRIEVAL -- #
-print("initializing embeddings..")
-hf_embeddings = HuggingFaceEndpointEmbeddings(
-    model=HF_EMBED_ENDPOINT,
-    task="feature-extraction",
-    huggingfacehub_api_token=os.environ["HF_TOKEN"],
-)
-print("embeddings initialized")
+
 
 # Load vectorstore (prepopulated with a notebook, because it takes forever)
 print("loading vectorstore")
@@ -69,18 +62,7 @@ rag_prompt = PromptTemplate.from_template(RAG_PROMPT_TEMPLATE)
 
 # -- GENERATION -- #
 ### 1. CREATE HUGGINGFACE ENDPOINT FOR LLM
-print("initializing huggingface endpoint")
-hf_llm = HuggingFaceEndpoint(
-    endpoint_url=f"{HF_LLM_ENDPOINT}",
-    max_new_tokens=512,
-    top_k=10,
-    top_p=0.95,
-    typical_p=0.95,
-    temperature=0.01,
-    repetition_penalty=1.03,
-    huggingfacehub_api_token=os.environ["HF_TOKEN"]
-)
-print("initialized endpoint")
+
 
 @cl.author_rename
 def rename(original_author: str):
@@ -100,6 +82,28 @@ async def start_chat():
     We will build our LCEL RAG chain here, and store it in the user session. 
     The user session is a dictionary that is unique to each user session, and is stored in the memory of the server.
     """
+
+    # -- RETRIEVAL -- #
+    print("initializing embeddings..")
+    hf_embeddings = HuggingFaceEndpointEmbeddings(
+        model=HF_EMBED_ENDPOINT,
+        task="feature-extraction",
+        huggingfacehub_api_token=os.environ["HF_TOKEN"],
+    )
+    print("embeddings initialized")
+
+    print("initializing huggingface endpoint")
+    hf_llm = HuggingFaceEndpoint(
+        endpoint_url=f"{HF_LLM_ENDPOINT}",
+        max_new_tokens=512,
+        top_k=10,
+        top_p=0.95,
+        typical_p=0.95,
+        temperature=0.01,
+        repetition_penalty=1.03,
+        huggingfacehub_api_token=os.environ["HF_TOKEN"]
+    )
+    print("initialized endpoint")
     
     ### BUILD LCEL RAG CHAIN THAT ONLY RETURNS TEXT
     print("start_chat(): building rag chain")
