@@ -26,13 +26,16 @@ HF_TOKEN = os.environ["HF_TOKEN"]
 
 # ---- GLOBAL DECLARATIONS ---- #
 # -- RETRIEVAL -- #
+print("initializing embeddings..")
 hf_embeddings = HuggingFaceEndpointEmbeddings(
     model=HF_EMBED_ENDPOINT,
     task="feature-extraction",
     huggingfacehub_api_token=os.environ["HF_TOKEN"],
 )
+print("embeddings initialized")
 
 # Load vectorstore (prepopulated with a notebook, because it takes forever)
+print("loading vectorstore")
 if os.path.exists("./data/vectorstore"):
     vectorstore = FAISS.load_local(
         "./data/vectorstore", 
@@ -61,10 +64,12 @@ Context:
 <|start_header_id|>assistant<|end_header_id|>
 """
 ### 2. CREATE PROMPT TEMPLATE
+print("creating prompt")
 rag_prompt = PromptTemplate.from_template(RAG_PROMPT_TEMPLATE)
 
 # -- GENERATION -- #
 ### 1. CREATE HUGGINGFACE ENDPOINT FOR LLM
+print("initializing huggingface endpoint")
 hf_llm = HuggingFaceEndpoint(
     endpoint_url=f"{HF_LLM_ENDPOINT}",
     max_new_tokens=512,
@@ -75,6 +80,7 @@ hf_llm = HuggingFaceEndpoint(
     repetition_penalty=1.03,
     huggingfacehub_api_token=os.environ["HF_TOKEN"]
 )
+print("initialized endpoint")
 
 @cl.author_rename
 def rename(original_author: str):
@@ -96,9 +102,11 @@ async def start_chat():
     """
     
     ### BUILD LCEL RAG CHAIN THAT ONLY RETURNS TEXT
+    print("start_chat(): building rag chain")
     lcel_rag_chain = {"context": itemgetter("query") | hf_retriever, "query": itemgetter("query")}| rag_prompt | hf_llm
 
     cl.user_session.set("lcel_rag_chain", lcel_rag_chain)
+    print("start_chat(): rag chain set")
     await cl.Message(content="I'm ready! My fav topics are tech and entrepreneurship. What would you like to chat about today?").send()
 
 @cl.on_message  
