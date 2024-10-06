@@ -61,8 +61,8 @@ if os.path.exists("./data/vectorstore"):
         hf_embeddings, 
         allow_dangerous_deserialization=True # this is necessary to load the vectorstore from disk as it's stored as a `.pkl` file.
     )
-    hf_retriever = vectorstore.as_retriever()
-print("Loaded Vectorstore")
+     hf_retriever = vectorstore.as_retriever()
+     print("Loaded Vectorstore")
 
 print("initializing huggingface endpoint")
 hf_llm = HuggingFaceEndpoint(
