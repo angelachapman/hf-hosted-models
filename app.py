@@ -25,9 +25,6 @@ HF_EMBED_ENDPOINT = os.environ["HF_EMBED_ENDPOINT"]
 HF_TOKEN = os.environ["HF_TOKEN"]
 
 # ---- GLOBAL DECLARATIONS ---- #
-
-# -- AUGMENTED -- #
-### 1. DEFINE STRING TEMPLATE
 RAG_PROMPT_TEMPLATE = """\
 <|start_header_id|>system<|end_header_id|>
 You are a helpful assistant who is an expert in tech, entrepreneurship, and personal development. You answer user questions based on provided context. 
@@ -44,13 +41,41 @@ Context:
 
 <|start_header_id|>assistant<|end_header_id|>
 """
-### 2. CREATE PROMPT TEMPLATE
+
 print("creating prompt")
 rag_prompt = PromptTemplate.from_template(RAG_PROMPT_TEMPLATE)
 
-# -- GENERATION -- #
-### 1. CREATE HUGGINGFACE ENDPOINT FOR LLM
+print("initializing embeddings..")
+hf_embeddings = HuggingFaceEndpointEmbeddings(
+    model=HF_EMBED_ENDPOINT,
+    task="feature-extraction",
+    huggingfacehub_api_token=os.environ["HF_TOKEN"],
+)
+print("embeddings initialized")
 
+# Load vectorstore (prepopulated with a notebook, because it takes forever)
+print("loading vectorstore")
+if os.path.exists("./data/vectorstore"):
+     vectorstore = FAISS.load_local(
+        "./data/vectorstore", 
+        hf_embeddings, 
+        allow_dangerous_deserialization=True # this is necessary to load the vectorstore from disk as it's stored as a `.pkl` file.
+    )
+    hf_retriever = vectorstore.as_retriever()
+print("Loaded Vectorstore")
+
+print("initializing huggingface endpoint")
+hf_llm = HuggingFaceEndpoint(
+    endpoint_url=f"{HF_LLM_ENDPOINT}",
+    max_new_tokens=256,
+    top_k=10,
+    top_p=0.95,
+    typical_p=0.95,
+    temperature=0.01,
+    repetition_penalty=1.03,
+    huggingfacehub_api_token=os.environ["HF_TOKEN"]
+)
+print("initialized endpoint")
 
 @cl.author_rename
 def rename(original_author: str):
@@ -70,39 +95,6 @@ async def start_chat():
     We will build our LCEL RAG chain here, and store it in the user session. 
     The user session is a dictionary that is unique to each user session, and is stored in the memory of the server.
     """
-
-    # -- RETRIEVAL -- #
-    print("initializing embeddings..")
-    hf_embeddings = HuggingFaceEndpointEmbeddings(
-        model=HF_EMBED_ENDPOINT,
-        task="feature-extraction",
-        huggingfacehub_api_token=os.environ["HF_TOKEN"],
-    )
-    print("embeddings initialized")
-
-    # Load vectorstore (prepopulated with a notebook, because it takes forever)
-    print("loading vectorstore")
-    if os.path.exists("./data/vectorstore"):
-        vectorstore = FAISS.load_local(
-            "./data/vectorstore", 
-            hf_embeddings, 
-            allow_dangerous_deserialization=True # this is necessary to load the vectorstore from disk as it's stored as a `.pkl` file.
-        )
-        hf_retriever = vectorstore.as_retriever()
-        print("Loaded Vectorstore")
-
-    print("initializing huggingface endpoint")
-    hf_llm = HuggingFaceEndpoint(
-        endpoint_url=f"{HF_LLM_ENDPOINT}",
-        max_new_tokens=512,
-        top_k=10,
-        top_p=0.95,
-        typical_p=0.95,
-        temperature=0.01,
-        repetition_penalty=1.03,
-        huggingfacehub_api_token=os.environ["HF_TOKEN"]
-    )
-    print("initialized endpoint")
     
     ### BUILD LCEL RAG CHAIN THAT ONLY RETURNS TEXT
     print("start_chat(): building rag chain")
